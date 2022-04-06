@@ -1,9 +1,4 @@
 # Airflow ETL With EKS EFS & Sagemaker #
-
-  
-
-[English version](readme_eng.md)
-
   
 
 ## Diagrama de la solución ##
@@ -43,43 +38,43 @@ Para llevar a cabo el desarrollo se utilizará el dataset de demoras y cancelaci
 
 cd to your local directory
 
-```cd /path/to/dataset/```
-
-<br></br>
-
-```$ mkdir -p minio/data/flights-bucket```
-
-<br></br>
+	```
+	cd /path/to/dataset/
+	mkdir -p minio/data/flights-bucket
+	```
 
 Download zipped dataset from kaggle
 
-```$ kaggle datasets download -d yuanyuwendymu/airline-delay-and-cancellation-data-2009-2018```
-
-<br></br>
+	```
+	kaggle datasets download -d yuanyuwendymu/airline-delay-and-cancellation-data-2009-2018
+	```
 
 Unzip files
 
-``` $ unzip airline-delay-and-cancellation-data-2009-2018.zip -d raw/```
+	``` 
+	unzip airline-delay-and-cancellation-data-2009-2018.zip -d raw/
+	```
 
-<br></br>
 
 Remove zipped data to save space
 
-``` $ aws s3 sync raw/ s3://ml-dataset-raw-s3/raw/```
-
-<br></br>
+	``` 
+	aws s3 sync raw/ s3://ml-dataset-raw-s3/raw/
+	```
 
 Remove zipped data to save space [optional]
 
-```$ rm airline-delay-and-cancellation-data-2009-2018.zip```
-
-  
+	```
+	$ rm airline-delay-and-cancellation-data-2009-2018.zip
+	```
 
 En este punto al correr el comando el siguiente comando debería aparecer un archivo CSV por año en el directorio de s3:
 
-```aws s3 sync raw/ s3://ml-dataset-raw-s3/raw/```
+	```
+	aws s3 sync raw/ s3://ml-dataset-raw-s3/raw/
+	```
 
- 
+<br><br>
 
 ## Desarrollo: ##
 
@@ -89,14 +84,14 @@ En este punto al correr el comando el siguiente comando debería aparecer un arc
 
 3. Se desarrollo un DAG de Airflow con schedule anual que:
 
-○ Se calcula el promedio del tiempo de demora de salida (columna DEP_DELAY) por aeropuerto de salida (columna ORIGIN) y día.
+		○ Se calcula el promedio del tiempo de demora de salida (columna DEP_DELAY) por aeropuerto de salida (columna ORIGIN) y día.
 
-○ Se utilizo un algoritmo de detección de anomalías para identificar por cada aeropuerto si hubo algún día con demoras fuera de lo normal.
+		○ Se utilizo un algoritmo de detección de anomalías para identificar por cada aeropuerto si hubo algún día con demoras fuera de lo normal.
 
-○ Se utilizo los datos del punto anterior por cada aeropuerto para producir un gráfico desde Python usando Pandas o Matplotlib en el cual se pueda ver la cantidad de vuelos de cada día con alguna indicación en los días que fueron considerados anómalos.
+		○ Se utilizo los datos del punto anterior por cada aeropuerto para producir un gráfico desde Python usando Pandas o Matplotlib en el cual se pueda ver la cantidad de vuelos de cada día con alguna indicación en los días que fueron considerados anómalos.
 
 
-○ Se carga la data sumarizada junto con un indicador para la fila correspondiente de cada día para indicar si para ese día en un aeropuerto particular las demoras estuvieron fuera de lo esperable. Asimismo los gráficos generados anteriormente son almacenados en S3 en un path fácilmente identificable por año y aeropuerto analizado.
+		○ Se carga la data sumarizada junto con un indicador para la fila correspondiente de cada día para indicar si para ese día en un aeropuerto particular las demoras estuvieron fuera de lo esperable. Asimismo los gráficos generados anteriormente son almacenados en S3 en un path fácilmente identificable por año y aeropuerto analizado.
 
 
 4. Se desarrollo una visualización de los datos cargados. Para ello se utilizó Superset corriendo en otro contenedor de Docker. Se incluye el archivo Docker Compose para levantar la utilidad, junto con un archivo de configuracion con variables de entorno.
@@ -151,11 +146,11 @@ Notas:
 	
 	d. Iniciar Airflow ejecutando ```docker-compose up``` dentro del directorio de airflow.
 
-	e. Conectarse al terminal del scheduler de Airflow con ```sudo docker exec -u 0 -it airflow_airflow-scheduler_1 bash```
+	e. Una vez que termina de inicializar, hacemos un attach al terminal del scheduler de Airflow con ```sudo docker exec -u 0 -it airflow_airflow-scheduler_1 bash```
 	
-	f. Ejecutar ```pip install --no-user --target=/home/airflow/.local/lib/python3.8/site-packages -r ./dags/requirements.txt``` para instalar las librerias de python requeridas.
+	f. En el terminal del contenedor, ejecutar ```pip install --no-user --target=/home/airflow/.local/lib/python3.8/site-packages -r ./dags/requirements.txt``` para instalar las librerias de python requeridas.
 	
-	g. Tras esto podremos (opcionalmente) hostear el puerto :8080 de Airflow con SSH, y entrar a la UI, para allí ejecutar el DAG que se encarga de procesar los datos, cargarlos en Postgres y generar los graficos con los resultados del calculo de anomalias. Como credenciales usamos ```airflow``` de usuario y contraseña.
+	g. Tras esto podremos (opcionalmente) hostear el puerto ```:8080``` de Airflow con SSH, y entrar a la UI, para allí ejecutar el DAG que se encarga de procesar los datos, cargarlos en Postgres y generar los graficos con los resultados del calculo de anomalias. Como credenciales usamos ```airflow``` de usuario y contraseña.
 
 	> Alli nos econtraremos una interfaz similar a esta:
 
@@ -163,10 +158,20 @@ Notas:
 
 	### Superset ###
 
-	h. Ahora clonaremos la repo de Superset en una nueva carpeta llamada superset. Para ello usamos el siguiente link: ```git clone https://github.com/apache/superset.git```
+	h. Clonamos la repo de Superset con ```git clone https://github.com/apache/superset.git```, en un nuevo directorio.
 
-	i. Copiamos los 2 archivos de la carpeta "superset-setup" a la carpeta de superset. Y ahora ejectuamos ```docker-compose up``` para iniciar los contenedores. Si hosteamos el puerto :8088 via SSH podremos acceder a la UI (usando ```admin``` como usuario, y ```admin``` como contraseña). Dentro de la interfaz podremos configurar las databases, datasets, y crear dashboards con graphs, utilizando los datos cargados desde Airflow.
+	i. Copiamos los 2 archivos de la carpeta ```superset-setup``` a la carpeta de superset. Y ahora dentro de ella ejectuamos ```docker-compose up``` para iniciar los contenedores. Si hosteamos el puerto ```:8088``` via SSH podremos acceder a la UI (usando ```admin``` como usuario, y ```admin``` como contraseña). 
+
 
 	> El dashboard de Superset luce similar a esto:
+	
 	[![](images/superset-dashboard.png)](images/superset-dashboard.png)
+
+	Dentro de la interfaz podremos configurar las databases, datasets, y crear dashboards con graphs, utilizando los datos cargados desde Airflow.
+
+	<br>
+
+	> Un ejemplo con el dataset, haciendo un promedio diario de demoras por Origen y Año:
+
+	[![](images/superset-dashboard.png)](images/graph.png)
 
