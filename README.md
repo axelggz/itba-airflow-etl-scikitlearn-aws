@@ -6,47 +6,30 @@
 
   
 
-### Diagrama de la solución ###
+## Diagrama de la solución ##
 
   
 
-[![](images/Layout.svg)](/images/Layout.svg)
+[![](images/layout.svg)](/images/layout.svg)
 
-  
-  
 
-### Definición del problema planteado ###
+## Definición del problema planteado ##
 
-<br></br>
-
-  
-  
 
 #### Contexto: ####
 
-  
 
 Acaba de ser contratado como el primer ingeniero de datos de una pequeña empresa de viajes. Su primera tarea para usted fue demostrar el valor y los conocimientos que se pueden generar a partir de las canalizaciones de datos.
 
-Su plan es que una vez que demuestre lo valiosos que pueden ser los datos, comenzarán a invertir en el uso de un proveedor de instancias en la nube. Por ahora, su propia computadora tendrá que hacerlo
-
-.
+Su plan es que una vez que demuestre lo valiosos que pueden ser los datos, comenzarán a invertir en el uso de un proveedor de instancias en la nube. Por ahora, su propia computadora tendrá que hacerlo.
 
 #### Objetivo: ####
 
-  
-
 Crear un DAG de Airflow que actúe de ETL para extraer extraiga datos estáticos S3 y los cargue en una base de datos de Postgres.
 
-  
-
 #### Datos a utilizar: ####
-
   
-
 Para llevar a cabo el desarrollo se utilizará el dataset de demoras y cancelaciones de viajes aéreos de Kaggle que será hosteado en un bucket en S3. Lo primero será obtener los datos siguiendo estos pasos:
-
-  
 
 * Instalar el cliente de Kaggle: pip install kaggle.
 
@@ -57,8 +40,6 @@ Para llevar a cabo el desarrollo se utilizará el dataset de demoras y cancelaci
 * Configurar las credenciales siguiendo estas [instrucciones](https://github.com/Kaggle/kaggle-api#api-credentials).
 
 * Bajar datos de Kaggle:
-
-  
 
 cd to your local directory
 
@@ -98,49 +79,28 @@ En este punto al correr el comando el siguiente comando debería aparecer un arc
 
 ```aws s3 sync raw/ s3://ml-dataset-raw-s3/raw/```
 
-  
+ 
 
-<br></br>
-
-  
-
-#### Desarrollo: ####
+## Desarrollo: ##
 
 1. Se configuro Airflow para que corra en AWS. Esto se puede hacer de varias maneras, pero aquí se desployo dentro de un contenedor de Docker en una virtual machine EC2.
 
-  
-
 2. Se creo una instancia RDS de Postgres. Esta instancia será utilizada como DB en los puntos siguientes.
-
-  
 
 3. Se desarrollo un DAG de Airflow con schedule anual que:
 
-  
-
-<br></br>
-
 ○ Se calcula el promedio del tiempo de demora de salida (columna DEP_DELAY) por aeropuerto de salida (columna ORIGIN) y día.
-
-<br></br>
 
 ○ Se utilizo un algoritmo de detección de anomalías para identificar por cada aeropuerto si hubo algún día con demoras fuera de lo normal.
 
-<br></br>
+○ Se utilizo los datos del punto anterior por cada aeropuerto para producir un gráfico desde Python usando Pandas o Matplotlib en el cual se pueda ver la cantidad de vuelos de cada día con alguna indicación en los días que fueron considerados anómalos.
 
-○ Se utilizo los datos del punto anterior por cada aeropuerto para producir un gráfico desde Python usando Pandas o Matplotlib en el cual se pueda ver la cantidad de vuelos de cada día con alguna indicación en
-
-los días que fueron considerados anómalos.
-
-<br></br>
 
 ○ Se carga la data sumarizada junto con un indicador para la fila correspondiente de cada día para indicar si para ese día en un aeropuerto particular las demoras estuvieron fuera de lo esperable. Asimismo los gráficos generados anteriormente son almacenados en S3 en un path fácilmente identificable por año y aeropuerto analizado.
 
-<br></br>
 
 4. Se desarrollo una visualización de los datos cargados. Para ello se utilizó Superset corriendo en otro contenedor de Docker. Se incluye el archivo Docker Compose para levantar la utilidad, junto con un archivo de configuracion con variables de entorno.
 
-<br></br>
 
 Notas:
 
@@ -153,12 +113,12 @@ Notas:
 
   
 
-1. Crear una virtual machine (al menos t3.large, y 30gb de almacenamiento) con Ubuntu 20.04 de SO.
+1. Crear una virtual machine (al menos **t3.large**, y **30gb** de almacenamiento) con Ubuntu 20.04 de SO.
 
-	a. (Opcional) Setar una elastic IP para poder acceder de manera mas sencilla.
+	a. (Opcional) Setar una **elastic IP** para poder acceder de manera mas sencilla.
 
 
-2. Crear una instancia de Postgres RDS, con al menos 5gb de espacio.
+2. Crear una instancia de **Postgres RDS**, con al menos 5gb de espacio.
 
   
 
@@ -169,15 +129,17 @@ Notas:
 
 	a. Instalar Docker	  
 
-	```sudo apt-get update```
-
-	```sudo apt-get install docker.io```
+	```
+	sudo apt-get update
+	sudo apt-get install docker.io
+	```
 
 	b. Instalar Docker Compose
 
-	```sudo apt-get update```
-
-	```sudo apt-get install docker.io```
+	```
+	sudo apt-get update
+	sudo apt-get install docker.io
+	```
 
 	### Airflow ###
 
@@ -195,7 +157,9 @@ Notas:
 	
 	g. Tras esto podremos (opcionalmente) hostear el puerto :8080 de Airflow con SSH, y entrar a la UI, para allí ejecutar el DAG que se encarga de procesar los datos, cargarlos en Postgres y generar los graficos con los resultados del calculo de anomalias. Como credenciales usamos ```airflow``` de usuario y contraseña.
 
-	[![](images/superset-dashboard.png)](images/superset-dashboard.png)
+	> Alli nos econtraremos una interfaz similar a esta:
+
+	[![](images/airflow-dashboard.png)](images/airflow-dashboard.png)
 
 	### Superset ###
 
@@ -203,6 +167,6 @@ Notas:
 
 	i. Copiamos los 2 archivos de la carpeta "superset-setup" a la carpeta de superset. Y ahora ejectuamos ```docker-compose up``` para iniciar los contenedores. Si hosteamos el puerto :8088 via SSH podremos acceder a la UI (usando ```admin``` como usuario, y ```admin``` como contraseña). Dentro de la interfaz podremos configurar las databases, datasets, y crear dashboards con graphs, utilizando los datos cargados desde Airflow.
 
-	El dashboard de Superset luce similar a esto:
+	> El dashboard de Superset luce similar a esto:
 	[![](images/superset-dashboard.png)](images/superset-dashboard.png)
 
