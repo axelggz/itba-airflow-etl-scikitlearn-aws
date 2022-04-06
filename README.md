@@ -5,7 +5,7 @@
 
   
 
-[![](images/layout.svg)](/images/layout.svg)
+[![](images/layout-aws.svg)](/images/layout-aws.svg)
 
 
 ## Definición del problema planteado ##
@@ -36,8 +36,6 @@ Para llevar a cabo el desarrollo se utilizará el dataset de demoras y cancelaci
 
 * Bajar datos de Kaggle:
 
-cd to your local directory
-
 	```
 	cd /path/to/dataset/
 	mkdir -p minio/data/flights-bucket
@@ -51,7 +49,7 @@ Download zipped dataset from kaggle
 
 Unzip files
 
-	``` 
+	```
 	unzip airline-delay-and-cancellation-data-2009-2018.zip -d raw/
 	```
 
@@ -65,7 +63,7 @@ Remove zipped data to save space
 Remove zipped data to save space [optional]
 
 	```
-	$ rm airline-delay-and-cancellation-data-2009-2018.zip
+	rm airline-delay-and-cancellation-data-2009-2018.zip
 	```
 
 En este punto al correr el comando el siguiente comando debería aparecer un archivo CSV por año en el directorio de s3:
@@ -84,17 +82,17 @@ En este punto al correr el comando el siguiente comando debería aparecer un arc
 
 3. Se desarrollo un DAG de Airflow con schedule anual que:
 
-		○ Se calcula el promedio del tiempo de demora de salida (columna DEP_DELAY) por aeropuerto de salida (columna ORIGIN) y día.
+	○ Se calcula el promedio del tiempo de demora de salida (columna DEP_DELAY) por aeropuerto de salida (columna ORIGIN) y día.
 
-		○ Se utilizo un algoritmo de detección de anomalías para identificar por cada aeropuerto si hubo algún día con demoras fuera de lo normal.
+	○ Se utilizo un algoritmo de detección de anomalías para identificar por cada aeropuerto si hubo algún día con demoras fuera de lo normal.
 
-		○ Se utilizo los datos del punto anterior por cada aeropuerto para producir un gráfico desde Python usando Pandas o Matplotlib en el cual se pueda ver la cantidad de vuelos de cada día con alguna indicación en los días que fueron considerados anómalos.
-
-
-		○ Se carga la data sumarizada junto con un indicador para la fila correspondiente de cada día para indicar si para ese día en un aeropuerto particular las demoras estuvieron fuera de lo esperable. Asimismo los gráficos generados anteriormente son almacenados en S3 en un path fácilmente identificable por año y aeropuerto analizado.
+	○ Se utilizo los datos del punto anterior por cada aeropuerto para producir un gráfico desde Python usando Pandas o Matplotlib en el cual se pueda ver la cantidad de vuelos de cada día con alguna indicación en los días que fueron considerados anómalos.
 
 
-4. Se desarrollo una visualización de los datos cargados. Para ello se utilizó Superset corriendo en otro contenedor de Docker. Se incluye el archivo Docker Compose para levantar la utilidad, junto con un archivo de configuracion con variables de entorno.
+	○ Se carga la data sumarizada junto con un indicador para la fila correspondiente de cada día para indicar si para ese día en un aeropuerto particular las demoras estuvieron fuera de lo esperable. Asimismo los gráficos generados anteriormente son almacenados en S3 en un path fácilmente identificable por año y aeropuerto analizado.
+
+
+4. Se desarrolló una visualización de los datos cargados. Para ello se utilizó Superset corriendo en otro contenedor de Docker. Se incluye el archivo Docker Compose para levantar la utilidad, junto con un archivo de configuracion con variables de entorno.
 
 
 Notas:
@@ -140,17 +138,32 @@ Notas:
 
 	c. Clonar la repo en alguna carpeta dentro de la VM
 	
-	d. Dentro del directorio ```./airflow/dags/db/``` modificar el archivo Pg.py y cambiar los credenciales conectar a la db.
+	d. Dentro del directorio ```./airflow/dags/db/``` modificar el archivo **Pg.py** y cambiar los credenciales conectar a la db (RDS).
 
-    e. Ingresar a directorio ```./airflow/dags/BLL/resources/``` y con el siguiente comando `````` descargamos los datasets.
-	
-	d. Iniciar Airflow ejecutando ```docker-compose up``` dentro del directorio de airflow.
+	e. Instalar Python junto con el modulo de Kaggle para descargar los dataset
 
-	e. Una vez que termina de inicializar, hacemos un attach al terminal del scheduler de Airflow con ```sudo docker exec -u 0 -it airflow_airflow-scheduler_1 bash```
+	```
+	apt-get updates
+	apt-get install python3-pip
+	pip install kaggle
+	```
+
+	y nos debemos autenticar para poder descargar el dataset con:
+
+	```
+	export KAGGLE_USERNAME=datadinosaur
+	export KAGGLE_KEY=xxxxxxxxxxxxxx
+	```
+
+    f. Ingresar a directorio ```./airflow/dags/BLL/resources/``` y ejecutar el siguiente comando ```kaggle datasets download -d yuanyuwendymu/airline-delay-and-cancellation-data-2009-2018```
 	
-	f. En el terminal del contenedor, ejecutar ```pip install --no-user --target=/home/airflow/.local/lib/python3.8/site-packages -r ./dags/requirements.txt``` para instalar las librerias de python requeridas.
+	g. Volver a ./airflow/ e iniciar Airflow ejecutando ```docker-compose up```.
+
+	h. Una vez que termina de inicializar, hacemos un attach al terminal del scheduler de Airflow con ```sudo docker exec -u 0 -it airflow_airflow-scheduler_1 bash```
 	
-	g. Tras esto podremos (opcionalmente) hostear el puerto ```:8080``` de Airflow con SSH, y entrar a la UI, para allí ejecutar el DAG que se encarga de procesar los datos, cargarlos en Postgres y generar los graficos con los resultados del calculo de anomalias. Como credenciales usamos ```airflow``` de usuario y contraseña.
+	i. En el terminal del contenedor, ejecutar ```pip install --no-user --target=/home/airflow/.local/lib/python3.8/site-packages -r ./dags/requirements.txt``` para instalar las librerias de python requeridas.
+	
+	j. Tras esto podremos (opcionalmente) hostear el puerto ```:8080``` perteneciente a Airflow, via SSH, y entrar a la UI, para allí ejecutar el DAG que se encarga de procesar los datos, cargarlos en Postgres y generar los graficos con los resultados del calculo de anomalias. Como credenciales usamos ```airflow``` de usuario y contraseña.
 
 	> Alli nos econtraremos una interfaz similar a esta:
 
