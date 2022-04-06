@@ -14,11 +14,16 @@ import DAL.FlightsDAL as FlightsDAL
 
 def calculateDelay(pYear):
 
+    # Crea la tabla delay si no existe
+    FlightsDAL.crearTabla()
+
     if FlightsDAL.verificarExistente(pYear):
         raise Exception('Error: Este año ya fue procesado.')
 
-    dfMainData = pd.read_csv(f'./BLL/resources/{pYear}.csv')
+    print('Loading CSV')
+    dfMainData = pd.read_csv(f'./BLL/resources/{pYear}.csv', low_memory=True)
     
+    print('Procesing CSV')
     dfDateCounts = dfMainData.groupby([
         'ORIGIN',
         'FL_DATE'
@@ -49,7 +54,7 @@ def calculateDelay(pYear):
 
     dfCalcs = pd.DataFrame()
 
-    mOrigins = ['ABQ']
+    # mOrigins = ['ABQ', 'EZE', 'LGW', 'EWR']
 
     for mOrigin in mOrigins:
 
@@ -87,12 +92,12 @@ def calculateDelay(pYear):
         plt.ylabel("Flight Delays")
         
         # Saving the graph
-        plt.savefig(fname=f'./BLL/exports/{mOrigin}.jpg', dpi=90)
+        plt.savefig(fname=f'./BLL/exports/{pYear}/{mOrigin}.jpg', dpi=90)
         plt.clf()
 
         dfFiltered.loc[dfFiltered['ANOMALY'] > 0, 'ANOMALY'] = False
         dfFiltered.loc[dfFiltered['ANOMALY'] < 0, 'ANOMALY'] = True
-        dfFiltered['YEAR'] = 2009
+        dfFiltered['YEAR'] = pYear
 
         FlightsDAL.copiarDatos(dfFiltered)
 

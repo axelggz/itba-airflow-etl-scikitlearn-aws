@@ -17,3 +17,20 @@ def verificarExistente(pAño):
         return False
     else:
         return True
+
+def crearTabla():
+
+    sqlQuery = f"""
+        create table if not exists delay (
+            origin varchar(10),
+			day float,
+            fl_date varchar(50),
+            fl_formatted_date varchar(50),
+			anomaly boolean,
+            amount float,
+            dep_delay float,
+            year float
+        )
+    """
+
+    return Pg.ejecutarTransformacion(sqlQuery)

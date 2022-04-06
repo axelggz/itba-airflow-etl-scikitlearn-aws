@@ -8,9 +8,7 @@ from airflow.models import dag
 from airflow.utils.dates import days_ago
 from airflow.operators.python_operator import PythonOperator
 
-
-
-import BLL.DoCalcs as DoCalcs
+#import BLL.DoCalcs as DoCalcs
 
 args={
     'owner': 'nacho',
@@ -28,7 +26,8 @@ dag = dag.DAG(
     catchup=False)
 
 def _proceso(**kwargs):
-    DoCalcs.calculateDelay(kwargs['year'])
+    #DoCalcs.calculateDelay(kwargs['year'])
+    print('a')
     # print(numpy.__file__)
 
 with dag:
@@ -36,19 +35,6 @@ with dag:
     procesar_2009 = PythonOperator(
         task_id = 'procesar_2009',
         python_callable=_proceso,
-        retries = 10,
-        retry_delay = timedelta(seconds = 3),
         provide_context=True,
         op_kwargs={'year': '2009'}
     )
-
-    procesar_2010 = PythonOperator(
-        task_id = 'procesar_2010',
-        python_callable=_proceso,
-        retries = 10,
-        retry_delay = timedelta(seconds = 3),
-        provide_context=True,
-        op_kwargs={'year': '2010'}
-    )
-
-    procesar_2009 >> procesar_2010

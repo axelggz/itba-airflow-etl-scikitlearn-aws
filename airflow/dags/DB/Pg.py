@@ -7,7 +7,7 @@ userDatabase = 'postgres'
 passwordDatabase ='KBJZTtjrmPXr'
 hostDatabase = 'database-1.chvryskzgbbb.us-east-1.rds.amazonaws.com'
 portDatabase = '5432'
-database = 'itba'
+database = 'postgres'
 
 
 
