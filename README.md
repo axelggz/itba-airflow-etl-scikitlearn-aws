@@ -186,5 +186,5 @@ Notas:
 
 	> Un ejemplo con el dataset, haciendo un promedio diario de demoras por Origen y Año:
 
-	[![](images/superset-dashboard.png)](images/graph.png)
+	[![](images/graph.png)](images/graph.png)
 
