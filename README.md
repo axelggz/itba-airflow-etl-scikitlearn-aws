@@ -1,4 +1,4 @@
-# Airflow ETL With EKS EFS & Sagemaker #
+# Airflow ETL With SkLearn and Superset #
   
 
 ## Diagrama de la solución ##
@@ -24,80 +24,32 @@ Crear un DAG de Airflow que actúe de ETL para extraer extraiga datos estáticos
 
 #### Datos a utilizar: ####
   
-Para llevar a cabo el desarrollo se utilizará el dataset de demoras y cancelaciones de viajes aéreos de Kaggle que será hosteado en un bucket en S3. Lo primero será obtener los datos siguiendo estos pasos:
-
-* Instalar el cliente de Kaggle: pip install kaggle.
-
-* Instalar el cliente de aws siguiendo estas [instrucciones](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) acorde a su sistema operativo.
-
-* Instalar el cliente de aws eksctl siguiendo estas [instrucciones](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html)
-
-* Configurar las credenciales siguiendo estas [instrucciones](https://github.com/Kaggle/kaggle-api#api-credentials).
-
-* Bajar datos de Kaggle:
-
-	```
-	cd /path/to/dataset/
-	mkdir -p minio/data/flights-bucket
-	```
-
-Download zipped dataset from kaggle
-
-	```
-	kaggle datasets download -d yuanyuwendymu/airline-delay-and-cancellation-data-2009-2018
-	```
-
-Unzip files
-
-	```
-	unzip airline-delay-and-cancellation-data-2009-2018.zip -d raw/
-	```
-
-
-Remove zipped data to save space
-
-	``` 
-	aws s3 sync raw/ s3://ml-dataset-raw-s3/raw/
-	```
-
-Remove zipped data to save space [optional]
-
-	```
-	rm airline-delay-and-cancellation-data-2009-2018.zip
-	```
-
-En este punto al correr el comando el siguiente comando debería aparecer un archivo CSV por año en el directorio de s3:
-
-	```
-	aws s3 sync raw/ s3://ml-dataset-raw-s3/raw/
-	```
-
-<br><br>
+Para llevar a cabo el desarrollo se utilizará el dataset de demoras y cancelaciones de viajes aéreos de Kaggle.
 
 ## Desarrollo: ##
 
-1. Se configuro Airflow para que corra en AWS. Esto se puede hacer de varias maneras, pero aquí se desployo dentro de un contenedor de Docker en una virtual machine EC2.
+1. Se configuró Airflow para que corra en AWS. Esto se puede hacer de varias maneras, pero aquí se deployo dentro de un contenedor de Docker en una virtual machine EC2.
 
-2. Se creo una instancia RDS de Postgres. Esta instancia será utilizada como DB en los puntos siguientes.
+2. Se creó una instancia RDS de Postgres. Esta instancia se utilizó como DB en los puntos siguientes.
 
-3. Se desarrollo un DAG de Airflow con schedule anual que:
+3. Se desarrolló un DAG de Airflow con schedule anual que:
 
-	○ Se calcula el promedio del tiempo de demora de salida (columna DEP_DELAY) por aeropuerto de salida (columna ORIGIN) y día.
+	○ Calcula el promedio del tiempo de demora de salida (columna DEP_DELAY) por aeropuerto de salida (columna ORIGIN) y día.
 
-	○ Se utilizo un algoritmo de detección de anomalías para identificar por cada aeropuerto si hubo algún día con demoras fuera de lo normal.
+	○ Utiliza un algoritmo de detección de anomalías para identificar por cada aeropuerto si hubo algún día con demoras fuera de lo normal.
 
-	○ Se utilizo los datos del punto anterior por cada aeropuerto para producir un gráfico desde Python usando Pandas o Matplotlib en el cual se pueda ver la cantidad de vuelos de cada día con alguna indicación en los días que fueron considerados anómalos.
-
-
-	○ Se carga la data sumarizada junto con un indicador para la fila correspondiente de cada día para indicar si para ese día en un aeropuerto particular las demoras estuvieron fuera de lo esperable. Asimismo los gráficos generados anteriormente son almacenados en S3 en un path fácilmente identificable por año y aeropuerto analizado.
+	○ Usa los datos del punto anterior por cada aeropuerto para producir un gráfico desde Python usando Pandas o Matplotlib en el cual se pueda ver la cantidad de vuelos de cada día con alguna indicación en los días que fueron considerados anómalos.
 
 
-4. Se desarrolló una visualización de los datos cargados. Para ello se utilizó Superset corriendo en otro contenedor de Docker. Se incluye el archivo Docker Compose para levantar la utilidad, junto con un archivo de configuracion con variables de entorno.
+	○ Carga la data sumarizada junto con un indicador para la fila correspondiente de cada día para indicar si para ese día en un aeropuerto particular las demoras estuvieron fuera de lo esperable.
+
+
+4. Se desarrolló una visualización de los datos cargados. Para ello se utilizó Superset corriendo también en Docker. Se incluye el archivo Docker Compose para levantar la herramienta, junto con un archivo de configuracion con variables de entorno.
 
 
 Notas:
 
-- El DAG funciona para cualquiera de los años 2009 a 2018 incluidos en el dataset. Se tiene en cuenta que si se corre dos veces para el mismo año podría haber una duplicación de datos y se resolvió.
+- El DAG funciona para cualquiera de los años 2009 a 2018 incluidos en el dataset. Si ya existen datos procesados para un año, el dag no correrá para el mismo.
 
   
   
